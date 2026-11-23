@@ -312,12 +312,13 @@ const title=$('#player-title');
 const direct=$('#direct-video');
 let origin=null;
 
-function showVideo(e,src,name,poster){
+function showVideo(e,src,name,poster,portrait=false){
 	if(typeof dialog?.showModal!=='function')return;
 
 	e.preventDefault();
 	origin=e.currentTarget;
 	title.textContent=name;
+	dialog.classList.toggle('is-portrait', portrait);
 	video.preload='metadata';
 	video.src=src;
 	video.poster=poster||'';
@@ -374,36 +375,116 @@ const items=(window.MOTION_VYBER||[]).filter(v=>v&&v.src&&v.title);
 const galleryEmpty=$('#gallery-empty');
 const galleryItems=$('#gallery-items');
 
+function createClipInfo(item,index){
+	const info=document.createElement('div');
+	info.className='clip-info';
+
+	const button=document.createElement('button');
+	button.className='clip-info-button';
+	button.type='button';
+	button.textContent='i';
+	button.setAttribute('aria-label','Informace o videu: '+item.title);
+	button.setAttribute('aria-expanded','false');
+
+	const panel=document.createElement('div');
+	panel.className='clip-info-panel';
+	panel.id='clip-info-'+index;
+	panel.hidden=true;
+	button.setAttribute('aria-controls',panel.id);
+
+	const description=document.createElement('p');
+	description.textContent=item.description;
+	const credit=document.createElement('p');
+	credit.className='clip-credit';
+	credit.textContent='Střih a grafika: 100 % s AI · '+item.model;
+	panel.append(description,credit);
+	info.append(button,panel);
+
+	let pinned=false;
+	let hovered=false;
+	function updateInfo(){
+		const open=pinned||hovered;
+		panel.hidden=!open;
+		button.setAttribute('aria-expanded',String(open));
+		if(open){
+			const {top,bottom}=button.getBoundingClientRect();
+			const height=panel.offsetHeight;
+			info.classList.toggle('clip-info-above',bottom+height>innerHeight&&top-height>80);
+		}
+	}
+	function closeInfo(){
+		pinned=false;
+		hovered=false;
+		updateInfo();
+	}
+
+	button.addEventListener('pointerenter',e=>{
+		if(e.pointerType!=='mouse')return;
+		hovered=true;
+		updateInfo();
+	});
+	info.addEventListener('pointerleave',()=>{
+		hovered=false;
+		updateInfo();
+	});
+	button.addEventListener('click',()=>{
+		if(pinned)closeInfo();
+		else{
+			pinned=true;
+			updateInfo();
+		}
+	});
+	document.addEventListener('pointerdown',e=>{
+		if(!panel.hidden&&!info.contains(e.target))closeInfo();
+	});
+	document.addEventListener('keydown',e=>{
+		if(e.key==='Escape'&&!panel.hidden)closeInfo();
+	});
+	info.addEventListener('focusout',e=>{
+		if(pinned&&!info.contains(e.relatedTarget))closeInfo();
+	});
+	return info;
+}
+
 if(items.length&&galleryEmpty&&galleryItems){
 	galleryEmpty.hidden=true;
 
 	items.forEach((item,index)=>{
-		const c=document.createElement('a');
-		c.className='clip';
-		c.href=item.src;
-		c.style.opacity='0';
-		c.style.transform='translateY(20px)';
+		const card=document.createElement('article');
+		card.className='clip-card';
+		if(!item.portrait)card.classList.add('clip-card-wide');
+
+		const link=document.createElement('a');
+		link.className='clip';
+		link.href=item.src;
+		link.setAttribute('aria-label','Přehrát video: '+item.title);
 
 		if(item.poster){
-			c.style.backgroundImage='url('+JSON.stringify(item.poster)+')';
+			link.style.backgroundImage='url('+JSON.stringify(item.poster)+')';
+			if(!item.portrait){
+				const frame=document.createElement('img');
+				frame.className='clip-wide-frame';
+				frame.src=item.poster;
+				frame.alt='';
+				frame.loading='lazy';
+				link.append(frame);
+			}
 		}
 
 		const name=document.createElement('strong');
 		name.textContent=item.title;
-
 		const note=document.createElement('span');
 		note.textContent=item.note||'Přehrát video';
 
-		c.append(name,note);
-		c.addEventListener('click',e=>showVideo(e,c.href,item.title,item.poster));
-		galleryItems.append(c);
+		const play=document.createElement('span');
+		play.className='clip-play';
+		play.setAttribute('aria-hidden','true');
 
-		// Staggered reveal
-		setTimeout(()=>{
-			c.style.transition='all 0.6s cubic-bezier(0.18, 0.85, 0.25, 1.0)';
-			c.style.opacity='1';
-			c.style.transform='none';
-		},index*100);
+		link.append(name,note,play);
+		link.addEventListener('click',e=>showVideo(e,link.href,item.title,item.poster,item.portrait));
+		card.append(link);
+		if(item.description)card.append(createClipInfo(item,index));
+		galleryItems.append(card);
 	});
 }
 
