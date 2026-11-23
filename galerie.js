@@ -17,4 +17,13 @@ window.MOTION_VYBER = [
 		model: 'GPT 6.2 Sol',
 		portrait: true,
 	},
+	{
+		title: 'Claude · Liquid Glass',
+		src: 'assets/motion/claude-liquid-glass.mp4',
+		poster: 'assets/motion/claude-liquid-glass.webp',
+		note: 'Motion design · 0:32',
+		description: 'Neoficiální produktový spot pro Claude. Animované rozhraní telefonu, skleněné karty a plynulé přechody.',
+		model: 'GPT 6.2 Sol',
+		portrait: true,
+	},
 ];
