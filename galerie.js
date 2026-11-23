@@ -17,13 +17,4 @@ window.MOTION_VYBER = [
 		model: 'GPT 6.2 Sol',
 		portrait: true,
 	},
-	{
-		title: 'Podcastový teaser',
-		src: 'assets/motion/podcastovy-teaser.mp4',
-		poster: 'assets/motion/podcastovy-teaser.webp',
-		note: 'Podcastový střih · 0:48',
-		description: 'Upoutávka z natočeného rozhovoru o realitách. Výběr nejsilnějších momentů, dynamické titulky a animované předěly.',
-		model: 'Claude Opus 5.5',
-		portrait: false,
-	},
 ];
